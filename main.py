@@ -1,6 +1,11 @@
+import os
+#Force Qt to use WAyland to prevent GStreamer crashes
+os.environ["QT_QPA_PLATFORM"] = "wayland"
+
 import sys
 import can
 import threading
+
 
 from PyQt5.QtCore import QObject, pyqtProperty, pyqtSignal
 from PyQt5.QtWidgets import QApplication
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("backend", vehicle)
 
     # Load UI
-    engine.load("dashboard.qml")
+    engine.load("newdashboard.qml")
 
     # Start CAN thread
     threading.Thread(target=can_listener, daemon=True).start()

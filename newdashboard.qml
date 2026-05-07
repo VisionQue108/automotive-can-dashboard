@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtMultimedia 5.15
 
 ApplicationWindow {
     id: root
@@ -17,7 +18,70 @@ ApplicationWindow {
     Rectangle {
         anchors.fill: parent
         color: "#000000"
+       // =========================
+        // DASHCAM PIP (Picture-in-Picture)
+        // =========================
+        Rectangle {
+            id: dashcamPanel
+            width: 160
+            height: 120 // 4:3 aspect ratio
+            
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.margins: 20
+            
+            color: "#1a1a1a"
+            border.color: "#333333"
+            border.width: 2
+            radius: 8
+            clip: true // Keeps the video cleanly inside the rounded corners
 
+            // --- THE GSTREAMER PIPELINE ---
+            MediaPlayer {
+                id: dashcam
+                source: "gst-pipeline: v4l2src device=/dev/video0 ! image/jpeg,width=640,height=480 ! jpegdec ! videoconvert ! tee name=t t. ! queue ! qtvideosink t. ! queue ! x264enc tune=zerolatency ! matroskamux ! filesink location=/home/naresa/car_project/dashcam_save/latest_recording.mkv"
+                autoPlay: true
+            }
+
+            // --- THE DISPLAY ---
+            VideoOutput {
+                anchors.fill: parent
+                source: dashcam
+                fillMode: VideoOutput.PreserveAspectCrop
+            }
+
+            // --- THE BLINKING 'REC' INDICATOR ---
+            Row {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: 8
+                spacing: 5
+                
+                visible: dashcam.playbackState === MediaPlayer.PlayingState
+
+                Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 5
+                    color: "#ff3b30"
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    SequentialAnimation on opacity {
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.2; duration: 800; easing.type: Easing.InOutQuad }
+                        NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
+                    }
+                }
+
+                Text {
+                    text: "REC"
+                    color: "#ff3b30"
+                    font.pixelSize: 12
+                    font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+        }
         Item {
             anchors.centerIn: parent
             width: 320
